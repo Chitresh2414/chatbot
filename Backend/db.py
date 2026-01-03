@@ -5,16 +5,19 @@ from dotenv import load_dotenv
 # 1. Load the .env file
 load_dotenv()
 
-try:
-    con=mysql.connector.connect(
-        host=os.getenv("Database_host"),
-        user=os.getenv("Database_user"),
-        password=os.getenv("Database_pass"),
-        database=os.getenv("Database_db")
-    )
 
-    if con.is_connected():
-          print("Connected successfully to MySQL!")
-          
-except mysql.connector.Error as err:
-    print(f"Error: {err}")
+class Database:
+    def __init__(self):
+        self.config={
+            "host":os.getenv("DB_HOST"),
+            "user":os.getenv("DB_USER"),
+            "password":os.getenv("DB_PASSWORD"),
+            "database":os.getenv("DB_NAME")
+        }
+
+    def connect(self):
+        try:
+            return mysql.connector.connect(**self.config)
+        except mysql.connector.Error as err:
+            print(f"❌ Database connection error: {err}")
+            return None
