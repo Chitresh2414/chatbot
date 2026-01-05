@@ -1,12 +1,15 @@
-import React from 'react'
+import { Routes, Route } from 'react-router-dom'
+import Chatbot from './components/Chatbot'
+import History from './components/History'
+import Home from './pages/Home'
 
 const App = () => {
   return (
-    <div>
-    <h1 className="text-3xl font-bold underline text-center mt-10 ">
-      React-vite & Flask Chatbot Application 🚀
-    </h1>
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/chat" element={<Chatbot />} />
+      <Route path="/history" element={<History />} />
+    </Routes>
   )
 }
 
