@@ -10,7 +10,7 @@ const chats = [
 
 const History = () => {
   return (
-  <div className="relative w-90 bg-[#1E293B] border-r-4 border-[#b1b1b2bc] p-4 text-white h-full  shadow-xl">
+  <div className="relative w-90  border-r-4 border-[#42434222] p-4 text-white h-full  shadow-xl">
   {/* Header */}
   <div className="flex items-center gap-2 mb-4">
     <MdHistory className="text-xl text-blue-400" />
