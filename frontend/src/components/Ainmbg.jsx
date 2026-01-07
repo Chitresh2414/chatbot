@@ -1,16 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 
-const Ainmbg = () => {
+const Ainmbg = ({ isTyping }) => {
   const orbsRef = useRef([]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       orbsRef.current.forEach((orb, i) => {
-        gsap.to(orb, {
-          x: () => gsap.utils.random(-360, 360),
-          y: () => gsap.utils.random(-250, 250),
-          scale: () => gsap.utils.random(0.3, 0.15),
+        // Normal floating animation
+        const floatAnim = gsap.to(orb, {
+          x: () => gsap.utils.random(-window.innerWidth / 2, window.innerWidth / 2),
+          y: () => gsap.utils.random(-window.innerHeight / 2, window.innerHeight / 2),
+          scale: () => gsap.utils.random(0.15, 0.3),
           opacity: () => gsap.utils.random(0.3, 0.9),
           duration: () => gsap.utils.random(8, 14),
           repeat: -1,
@@ -18,11 +19,25 @@ const Ainmbg = () => {
           ease: "sine.inOut",
           delay: i * 0.5,
         });
+
+        // Pulse effect when AI is typing
+        if (isTyping) {
+          gsap.to(orb, {
+            scale: "+=0.1",
+            opacity: 1,
+            duration: 0.5,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+        } else {
+          floatAnim.play(); // Resume normal animation
+        }
       });
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [isTyping]);
 
   return (
     <svg
@@ -31,12 +46,13 @@ const Ainmbg = () => {
       style={{
         position: "fixed",
         inset: 0,
+        width: "100vw",
+        height: "100vh",
         zIndex: -1,
         pointerEvents: "none",
       }}
     >
       <defs>
-        {/* Premium AI Glow */}
         <radialGradient id="aiGlow">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
           <stop offset="40%" stopColor="#5eead4" stopOpacity="0.4" />
@@ -49,12 +65,12 @@ const Ainmbg = () => {
         </filter>
       </defs>
 
-      {[...Array(6)].map((_, i) => (
+      {[...Array(8)].map((_, i) => (
         <circle
           key={i}
           ref={(el) => (orbsRef.current[i] = el)}
-          cx={gsap.utils.random(200, 800)}
-          cy={gsap.utils.random(200, 600)}
+          cx={gsap.utils.random(0, 1000)}
+          cy={gsap.utils.random(0, 1000)}
           r={gsap.utils.random(100, 200)}
           fill="url(#aiGlow)"
           filter="url(#softBlur)"

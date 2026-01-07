@@ -1,14 +1,10 @@
 import api from "./api"
 
-// Get all Chats
+//chats
+export const createChat = () => api.post("/chats");
+export const fetchChats = () => api.get("/chats");
 
-export const fetchChats = () => api.get("/chats")
-
-//Post new chat 
-
-export const createChat=()=>api.post("/chat/new")
-
-
-// GET messages of a chat
-export const fetchMessages = (chatId) =>
-  api.get(`/messages/${chatId}`);
+//Messages
+export const fetchMessages = (id) => api.get(`/chats/${id}/messages`);
+export const sendMessage = (id, msg) =>
+  api.post(`/chats/${id}/messages`, { content: msg });

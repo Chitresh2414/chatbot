@@ -1,21 +1,23 @@
-import React from 'react'
+import React from "react";
 
-const Chatbot = () => {
+const Chatbot = ({ messages }) => {
   return (
-    <div className="flex-1 overflow-y-auto space-y-3 mb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-    <div className="flex gap-2 items-start">
-      <span className="text-xl">🤖</span>
-      <div className="bg-[#1b1c1f] p-3 rounded-xl max-w-[70%]">
-        Hello! How can I help you?
-      </div>
+    <div className="flex flex-col space-y-2">
+      {messages.map((msg, idx) => (
+        <div
+          key={idx}
+          className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+        >
+          <div
+            className={`max-w-[80%] sm:max-w-[70%] p-2 sm:p-3 rounded-xl text-sm sm:text-base
+              ${msg.role === "user" ? "bg-[#303132] text-white" : "bg-[#1b1c1f]"}`}
+          >
+            {msg.content}
+          </div>
+        </div>
+      ))}
     </div>
-    <div className="flex justify-end gap-2 items-start">
-      <div className="bg-[#303132] p-3 rounded-xl max-w-[70%] text-white">
-        Hi !
-      </div>
-    </div>
-  </div>
-  )
-}
+  );
+};
 
-export default Chatbot
+export default Chatbot;
