@@ -1,32 +1,24 @@
-show databases;
-use chatbot_db;
-show tables;
+create database if not exists chatbot_db_new;
 
+use chatbot_db_new;
 
-CREATE TABLE chat_history (
+-- Chats table
+CREATE TABLE IF NOT EXISTS chats (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_message TEXT,
-    bot_reply TEXT,
+    title VARCHAR(255) DEFAULT 'New Chat',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE chats(
-	id int auto_increment primary key,
-    created_at timestamp default current_timestamp
+-- Messages table
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chat_id INT NOT NULL,
+    role ENUM('user','bot') NOT NULL,
+    text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 );
 
-desc chats;
-
-CREATE TABLE messages(
-	id int auto_increment primary key,
-    chat_id int not null,
-    role enum('user','bot') not null,
-    text TEXT not null,
-    created_at timestamp default current_timestamp,
-    foreign key(chat_id) references chats(id) on delete cascade
-    
-);
-
-desc messages;
-desc chat_history;
-select * from chat_history;
+SHOW TABLES;
+DESC chats;
+DESC messages;
