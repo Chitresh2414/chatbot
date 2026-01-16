@@ -3,7 +3,8 @@ from flask_cors import CORS
 from chat import ChatController
 
 app = Flask(__name__)
-CORS(app)
+# Allow all origins (for React frontend)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 chat_controller = ChatController()
 
@@ -11,28 +12,42 @@ chat_controller = ChatController()
 def home():
     return jsonify({"status": "Flask Chatbot API running 🚀"})
 
+# -------------------- Create a chat --------------------
 @app.route("/api/chats", methods=["POST"])
 def create_chat():
     chat_id = chat_controller.create_chat()
+    if chat_id is None:
+        return jsonify({"error": "Failed to create chat"}), 500
     return jsonify({"chat_id": chat_id}), 201
 
+# -------------------- Get all chats --------------------
 @app.route("/api/chats", methods=["GET"])
 def get_chats():
-    return jsonify(chat_controller.get_chats())
+    data = chat_controller.get_chats()
+    return jsonify(data), 200
 
+# -------------------- Get messages of a chat --------------------
 @app.route("/api/chats/<int:chat_id>/messages", methods=["GET"])
 def get_messages(chat_id):
-    return jsonify(chat_controller.get_messages(chat_id))
+    msgs = chat_controller.get_messages(chat_id)
+    return jsonify(msgs), 200
 
+# -------------------- Send message to a chat --------------------
 @app.route("/api/chats/<int:chat_id>/messages", methods=["POST"])
 def send_message(chat_id):
-    data = request.get_json()
-    if not data or "content" not in data:
-        return jsonify({"error": "Message content required"}), 400
+    # Parse JSON safely
+    data = request.get_json(force=True)
+    if not data or "content" not in data or not data["content"].strip():
+        return jsonify({"error": "Message content required", "received": data}), 400
 
-    user_message = data["content"]
-    reply = chat_controller.chat(chat_id, user_message)
-    return jsonify({"reply": reply})
+    user_message = data["content"].strip()
+
+    try:
+        reply = chat_controller.chat(chat_id, user_message)
+        return jsonify({"reply": reply}), 200
+    except Exception as e:
+        print(f"❌ Send message error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

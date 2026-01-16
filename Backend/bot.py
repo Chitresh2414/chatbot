@@ -6,10 +6,12 @@ load_dotenv()
 
 class BotService:
     def __init__(self):
-        self.client = genai.Client(api_key=os.getenv("CHATBOT_API_KEY"))
-    
+        self.client = genai.Client(
+            api_key=os.getenv("CHATBOT_API_KEY")
+        )
+
     def get_response(self, message: str) -> str:
-        if not message.strip():
+        if not message or not message.strip():
             return "Please enter a message."
 
         try:
@@ -17,7 +19,7 @@ class BotService:
                 model="gemini-2.5-flash",
                 contents=message
             )
-            return response.text if hasattr(response, "text") else str(response)
+            return response.text
         except Exception as e:
-            print(f"❌ CHATBOT error: {e}")
-            return "Sorry, I couldn't process your request."
+            print("CHATBOT ERROR:", e)
+            return "Something went wrong."
