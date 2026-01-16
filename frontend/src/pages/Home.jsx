@@ -104,10 +104,10 @@ const Home = () => {
       const res = await sendMessageAPI(chatId, text);
       const reply = res.data?.reply || "";
 
-      // Add empty assistant message for typing animation
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      // Add empty bot message for typing animation
+      setMessages((prev) => [...prev, { role: "bot", content: "" }]);
 
-      // Animate assistant typing
+      // Animate bot typing
       let i = 0;
       const interval = setInterval(() => {
         i++;
