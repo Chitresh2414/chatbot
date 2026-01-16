@@ -16,7 +16,7 @@ class BotService:
 
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 contents=message
             )
             return response.text

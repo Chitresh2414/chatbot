@@ -35,15 +35,23 @@ def get_messages(chat_id):
 # -------------------- Send message to a chat --------------------
 @app.route("/api/chats/<int:chat_id>/messages", methods=["POST"])
 def send_message(chat_id):
-    # Parse JSON safely
+    # JSON data ko safely read karein
     data = request.get_json(force=True)
-    if not data or "content" not in data or not data["content"].strip():
-        return jsonify({"error": "Message content required", "received": data}), 400
+    
+    # Check karein ki data mein 'content' hai ya 'message'
+    # .get() use karne se error nahi aata agar key missing ho
+    user_message = data.get("content") or data.get("message")
 
-    user_message = data["content"].strip()
+    # Agar dono hi nahi mile, tabhi error dein
+    if not user_message:
+        return jsonify({
+            "error": "Message content required", 
+            "received": data 
+        }), 400
 
     try:
-        reply = chat_controller.chat(chat_id, user_message)
+        # Chatbot ko message bhejein
+        reply = chat_controller.chat(chat_id, user_message.strip())
         return jsonify({"reply": reply}), 200
     except Exception as e:
         print(f"❌ Send message error: {e}")
