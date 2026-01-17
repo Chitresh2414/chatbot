@@ -63,21 +63,23 @@ class ChatController:
             if con: con.close()
 
     # Get all chats for sidebar
+   # Updated Get all chats for sidebar (TiDB Compatible)
     def get_chats(self):
         try:
             con = self.db.connect()
             cur = con.cursor(dictionary=True)
-            cur.execute("""
-                SELECT c.id, c.title, c.created_at,
-                m.text AS last_message
+            # TiDB does not support subqueries in JOIN ON conditions.
+            # We use a cleaner JOIN approach to get the last message.
+            query = """
+                SELECT 
+                    c.id, 
+                    c.title, 
+                    c.created_at,
+                    (SELECT text FROM messages WHERE chat_id = c.id ORDER BY id DESC LIMIT 1) AS last_message
                 FROM chats c
-                LEFT JOIN messages m ON m.id = (
-                    SELECT id FROM messages
-                    WHERE chat_id = c.id
-                    ORDER BY id DESC LIMIT 1
-                )
                 ORDER BY c.id DESC
-            """)
+            """
+            cur.execute(query)
             data = cur.fetchall()
             return data
         except Exception as e:
