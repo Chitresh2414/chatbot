@@ -5,8 +5,8 @@ from chat import ChatController
 
 app = Flask(__name__)
 # Allow all origins (for React frontend)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
+# In your Flask app
+CORS(app, origins=["https://chatbot-pearl-three.vercel.app"])
 chat_controller = ChatController()
 
 @app.route("/")
