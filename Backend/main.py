@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from chat import ChatController
@@ -58,4 +59,5 @@ def send_message(chat_id):
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port=int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
