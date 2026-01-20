@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Chatbot from "../components/Chatbot";
 import MessageInput from "../components/MessageInput";
 import Ainmbg from "../components/Ainmbg";
@@ -18,8 +18,41 @@ const Home = () => {
   const [chatId, setChatId] = useState(null);
   const [activeChatId, setActiveChatId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
-
   const chatContainerRef = useRef(null);
+  const typingIntervalRef = useRef(null);
+
+  // -------------------- Create new chat (Optimistic) --------------------
+  const handleNewChat = useCallback(async () => {
+    if (isTyping) return;
+
+    const tempId = Date.now();
+    const newChat = {
+      id: tempId,
+      title: "New Chat",
+      last_message: "No messages yet",
+      created_at: new Date().toISOString(),
+    };
+
+    setChats((prev) => [newChat, ...prev]);
+    setChatId(tempId);
+    setActiveChatId(tempId);
+    setMessages([]);
+
+    try {
+      const res = await createChat();
+      const serverId = res.data.chat_id || res.data.id;
+
+      setChatId(serverId);
+      setActiveChatId(serverId);
+      setChats((prev) =>
+        prev.map((c) => (c.id === tempId ? { ...c, id: serverId } : c))
+      );
+    } catch (err) {
+      console.error("New chat failed:", err);
+      toast.error("Connection error");
+      setChats((prev) => prev.filter((c) => c.id !== tempId));
+    }
+  }, [isTyping]);
 
   // -------------------- Load chats on mount --------------------
   useEffect(() => {
@@ -32,7 +65,6 @@ const Home = () => {
           setChats(data);
           setChatId(data[0].id);
           setActiveChatId(data[0].id);
-
           const msgRes = await fetchMessages(data[0].id);
           setMessages(msgRes.data || []);
         } else {
@@ -43,11 +75,16 @@ const Home = () => {
         toast.error("Failed to load chats");
       }
     };
-
     loadChats();
+  }, [handleNewChat]);
+
+  // -------------------- Cleanup and Auto-scroll --------------------
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+    };
   }, []);
 
-  // -------------------- Auto scroll to bottom --------------------
   useEffect(() => {
     chatContainerRef.current?.scrollTo({
       top: chatContainerRef.current.scrollHeight,
@@ -55,37 +92,18 @@ const Home = () => {
     });
   }, [messages]);
 
-  // -------------------- Create new chat --------------------
-  const handleNewChat = async () => {
-    try {
-      const res = await createChat();
-      const newChat = {
-        id: res.data.chat_id,
-        title: "New Chat",
-        last_message: "",
-        created_at: new Date().toISOString(),
-      };
-
-      setChats((prev) => [newChat, ...prev]);
-      setChatId(newChat.id);
-      setActiveChatId(newChat.id);
-      setMessages([]);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to create chat");
-    }
-  };
-
-  // -------------------- Select a chat --------------------
+  // -------------------- Select Chat --------------------
   const handleSelectChat = async (chat) => {
+    if (isTyping) {
+      toast.info("Please wait for the response to finish");
+      return;
+    }
     try {
       setActiveChatId(chat.id);
       setChatId(chat.id);
-
       const res = await fetchMessages(chat.id);
       setMessages(res.data || []);
     } catch (err) {
-      console.error(err);
       toast.error("Failed to load messages");
     }
   };
@@ -93,87 +111,58 @@ const Home = () => {
   // -------------------- Send message --------------------
   const handleSendMessage = async (rawText) => {
     const text = rawText?.trim();
-    if (!text) return; // prevent empty messages
-    if (!chatId || isTyping) return; // prevent sending if no chat or already typing
+    if (!text || !chatId || isTyping) return;
 
-    // Add user message immediately
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setIsTyping(true);
 
     try {
       const res = await sendMessageAPI(chatId, text);
       const reply = res.data?.reply || "";
-
-      // Add empty bot message for typing animation
+      
       setMessages((prev) => [...prev, { role: "bot", content: "" }]);
 
-      // Animate bot typing
       let i = 0;
-      const interval = setInterval(() => {
+      typingIntervalRef.current = setInterval(() => {
         i++;
         setMessages((prev) => {
           const updated = [...prev];
-          const lastIndex = updated.length - 1;
-          updated[lastIndex] = {
-            ...updated[lastIndex],
-            content: reply.slice(0, i),
-          };
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: reply.slice(0, i) };
           return updated;
         });
 
         if (i >= reply.length) {
-          clearInterval(interval);
+          clearInterval(typingIntervalRef.current);
           setIsTyping(false);
-
-          // Update last_message in sidebar
           setChats((prev) =>
-            prev.map((chat) =>
-              chat.id === chatId
-                ? { ...chat, last_message: reply || "No messages yet" }
-                : chat
-            )
+            prev.map((c) => (c.id === chatId ? { ...c, last_message: reply } : c))
           );
         }
-      }, 12);
+      }, 10);
     } catch (err) {
-      console.error("Send message error:", err);
       setIsTyping(false);
-      toast.error("Message failed");
+      toast.error("Failed to send message");
     }
   };
 
-  // -------------------- Render --------------------
   return (
     <div className="w-full h-screen bg-[#020617] text-white flex flex-col md:flex-row overflow-hidden relative">
-      {/* AI Animated Background */}
       <div className="absolute inset-0 z-0">
         <Ainmbg isTyping={isTyping} />
       </div>
-
-      {/* Sidebar */}
       <History
         chats={chats}
         activeChatId={activeChatId}
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
-        className="z-20"
       />
-
-      {/* Chat Area */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <Header />
-
-        {/* Messages */}
-        <div
-          ref={chatContainerRef}
-          className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 bg-black/20 backdrop-blur-sm scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
-        >
+        <div ref={chatContainerRef} className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 bg-black/20 backdrop-blur-sm">
           <Chatbot messages={messages} />
         </div>
-
-        {/* Input */}
         <div className="relative z-10 p-2 sm:p-4 backdrop-blur-sm border-t border-gray-700">
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-2 sm:px-5 py-2 sm:py-3">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-2 py-2">
             <MessageInput onSend={handleSendMessage} disabled={isTyping} />
           </div>
         </div>
