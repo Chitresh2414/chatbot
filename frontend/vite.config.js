@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://chatbot-3q8e.onrender.com',
+        target: 'http://127.0.0.1:5000/',
         changeOrigin: true,
         secure: false,
       },
